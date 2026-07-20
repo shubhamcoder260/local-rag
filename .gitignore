@@ -1,0 +1,18 @@
+# Python environment
+venv/
+__pycache__/
+*.pyc
+
+# ChromaDB data (regenerated on each user's machine)
+chroma_storage/
+
+# Benchmark logs (personal test data, not meant for the repo)
+benchmark_log.csv
+logs/
+
+# Docker
+*.log
+
+# OS-specific junk files
+.DS_Store
+Thumbs.db

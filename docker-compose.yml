@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/chroma_storage
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "8501:8501"
+    volumes:
+      - benchmark_data:/app/logs
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  chroma_data:
+  benchmark_data:

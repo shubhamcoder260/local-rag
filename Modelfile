@@ -1,0 +1,5 @@
+FROM qwen2.5-coder:7b
+# Sets the context size to 16k tokens
+PARAMETER num_ctx 16384
+# Forces the model to stop processing immediately after answering 
+PARAMETER stop "[/TEXT]"
