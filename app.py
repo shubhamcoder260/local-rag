@@ -94,34 +94,34 @@ if st.button("Ask"):
 
     elif not selected_model:
         st.warning("No models available")
-    
+
     elif not question:
         st.warning("Type a question first.")
     else:
-        payload = {"question": question, "source_collection": selected_doc, "llm_model":selected_model}
+        payload = {"question": question, "source_collection": selected_doc, "llm_model": selected_model}
 
         start_time = time.time()
 
-        with requests.post(f"{API_BASE_URL}/ask", json=payload, stream=True) as response:
-            if response.status_code != 200:
-                st.error(f"Failed: {response.text}")
-            else:
-                lines = response.iter_lines(decode_unicode=True)
-                metadata_line = next(lines)
-                metadata = json.loads(metadata_line)
+        with st.spinner("Thinking... this may take a while depending on your model and hardware."):
+            with requests.post(f"{API_BASE_URL}/ask", json=payload, stream=True) as response:
+                if response.status_code != 200:
+                    st.error(f"Failed: {response.text}")
+                else:
+                    lines = response.iter_lines(decode_unicode=True)
+                    metadata_line = next(lines)
+                    metadata = json.loads(metadata_line)
 
-                st.markdown("### Answer")
-                answer_placeholder = st.empty()
-                full_answer = ""
-                for line in lines:
-                    full_answer += line
-                    answer_placeholder.write(full_answer)
-                
-                elapsed = time.time() - start_time
-                st.caption(f"Answered in {elapsed:.1f} seconds")
-                if record_data:
-                    log_benchmark(question, full_answer, metadata["context_used"],selected_model,selected_doc,elapsed)
+                    st.markdown("### Answer")
+                    answer_placeholder = st.empty()
+                    full_answer = ""
+                    for line in lines:
+                        full_answer += line
+                        answer_placeholder.write(full_answer)
 
+                    elapsed = time.time() - start_time
+                    st.caption(f"Answered in {elapsed:.1f} seconds")
+                    if record_data:
+                        log_benchmark(question, full_answer, metadata["context_used"], selected_model, selected_doc, elapsed)
 
-                with st.expander("Show retrieved context"):
-                    st.text(metadata["context_used"])
+                    with st.expander("Show retrieved context"):
+                        st.text(metadata["context_used"])

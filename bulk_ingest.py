@@ -29,7 +29,7 @@ def ingest_pdf_file(file_path):
     source_name = os.path.basename(file_path)
 
     with open(file_path, "rb") as f:
-        files = {"files": (source_name, f,"application/pdf")}
+        files = {"file": (source_name, f,"application/pdf")}
         response = requests.post(f"{API_BASE_URL}/ingest/pdf", files=files)
 
     if response.status_code ==200:
