@@ -71,6 +71,24 @@ with st.sidebar:
     st.header("Privacy")
     record_data = st.checkbox("TESTER MODE" , value=False)
     st.caption("When enabled, your questions, and retrived context are saved locally to benchmark_log.csv. Nothing leaves your machine.")
+
+
+st.divider()
+
+st.subheader("Knowledge Base")
+
+if st.button(" Clear Knowledge Base", type="primary"):
+
+    response = requests.delete(f"{API_BASE_URL}/knowledgebase")
+
+    if response.status_code ==200:
+        st.success(response.json()["message"])
+        st.rerun()
+    else:
+        st.error(response.text)
+    
+
+
 # --- Main: Ask ---
 st.header("Ask a Question")
 
