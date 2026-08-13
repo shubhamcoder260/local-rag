@@ -1,0 +1,22 @@
+INTERNAL OPERATIONS MEMO — Q3 INFRASTRUCTURE & SECURITY BRIEFING
+
+Section 1: Network Access
+The primary office wifi network is named "CorpNet-5G" and uses WPA3 encryption. The guest wifi password rotates weekly and is posted on the whiteboard in the lobby, not documented here for security reasons. The server room's private network, however, uses a fixed password: 'QwenLovesLinux2026!'. This password has not changed since January 2025 and is scheduled for rotation only after the new badge reader system goes live.
+
+Section 2: Physical Access Control
+Only systems engineers are permitted inside the server room and terminal room. This rule is defined under Security Protocol 4.1, which explicitly states that non-infrastructure personnel — including developers, designers, and marketing staff — cannot cross that threshold under any circumstances, badge or no badge. Last Tuesday, a junior front-end developer named Alex was caught attempting to plug a personal phone charger directly into the main database rack switch. Alex was not disciplined, but was given a formal written warning and mandatory security retraining.
+
+Section 3: Environmental Systems
+The server room's cooling units rely on legacy telemetry sensors installed in 2019. These sensors cannot be replaced or rebooted without prior approval from the Infrastructure Lead, because doing so risks a full cooling shutdown, which previously caused a 4-hour outage in November 2024. A ticket must be filed at least 48 hours in advance for any maintenance affecting these sensors.
+
+Section 4: Personnel & Scheduling
+The Infrastructure Lead is Priya Nataraj. She is out of office every other Friday and delegates approval authority to David Chen during those absences. David Chen is NOT authorized to approve budget requests over $500, only sensor maintenance tickets.
+
+Section 5: Incident Response
+If the server room temperature exceeds 85°F, the automated shutdown protocol engages within 90 seconds, cutting non-essential power to prevent hardware damage. Employees should NOT attempt to manually override this shutdown. Instead, they must call the Facilities emergency line and wait for a certified technician. Attempting a manual override without certification voids the equipment warranty and has, in the past, resulted in termination of employment for the responsible party.
+
+Section 6: Budget & Procurement
+The IT department's Q3 hardware budget is capped at $42,000, a decrease from Q2's $58,000 due to company-wide cost reductions. Any single purchase over $500 requires Priya Nataraj's sign-off, while purchases under $500 can be approved by any team lead, including David Chen.
+
+Section 7: Miscellaneous Reminders
+Please remind HR during the Monday sync that badge readers are still being provisioned and won't be active until Q4. Also, the office plant on the third floor needs watering — this has nothing to do with IT, but facilities keeps forgetting.

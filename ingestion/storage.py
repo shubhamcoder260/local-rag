@@ -1,7 +1,7 @@
 import chromadb
 import re
 
-
+VERSION = "chromadb-v1"
 DB_PATH = "./chroma_storage"
 client = chromadb.PersistentClient(path=DB_PATH)
 

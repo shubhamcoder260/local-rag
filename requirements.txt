@@ -6,3 +6,4 @@ ollama
 pymupdf
 streamlit
 requests
+psutil

@@ -12,7 +12,6 @@ from ingestion import pipeline
 
 app = FastAPI(title="Local RAG Application API")
 
-MAX_TEXT_LENGTH=500_000
 
 
 
@@ -33,9 +32,6 @@ class IngestRequest(BaseModel):
 async def ingest_raw_text(payload: IngestRequest):
     """API endpoint to chunk, embed, and store raw text data into ChromaDB."""
     try:
-        
-        if len(payload.text_content) > MAX_TEXT_LENGTH: 
-            raise HTTPException(status_code=413, detail=f"Text too large ({len(payload.text_content)} chars). Max supported is {MAX_TEXT_LENGTH} chars for now — try a smaller document.")
 
         result = pipeline.ingest_document(
             text=payload.text_content,
@@ -49,7 +45,10 @@ async def ingest_raw_text(payload: IngestRequest):
                 )
                 }
     except HTTPException:
+        
         raise
+    except pipeline.DocumentTooLargeError as e:
+        raise HTTPException(status_code=413, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -125,7 +124,7 @@ async def ingest_pdf(file: UploadFile = File(...), source_name: str = None):
         return {"status": "success", 
                 "message": (
                     f"Ingested {result['chunks']} chunks "
-                    f"into collection '{result['collection_name']}' sucessfully."
+                    f"into collection '{result['collection_name']}' successfully."
                     )
                     }
     except HTTPException:

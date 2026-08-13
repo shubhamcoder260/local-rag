@@ -8,7 +8,11 @@ chroma_storage/
 
 # Benchmark logs (personal test data, not meant for the repo)
 benchmark_log.csv
+benchmark_results.csv
 logs/
+
+# User test documents
+*.docx
 
 # Docker
 *.log
