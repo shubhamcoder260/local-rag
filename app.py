@@ -57,21 +57,77 @@ with st.sidebar:
                     st.success(response.json()["message"])
                 else:
                     st.error(f"Failed: {response.text}")
-    st.divider()
-    if os.path.exists("logs/benchmark_log.csv"):
-        with open("logs/benchmark_log.csv", "rb") as f:
-            st.download_button(
-                label="Download benchmark log",
-                data=f,
-                file_name="benchmark_log.csv",
-                mime="text/csv"
 
-            )
     st.divider()
-    st.header("Privacy")
-    record_data = st.checkbox("TESTER MODE" , value=False)
-    st.caption("When enabled, your questions, and retrived context are saved locally to benchmark_log.csv. Nothing leaves your machine.")
 
+    # --- Benchmarking ---
+    st.header("Benchmarking")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Ingestion")
+
+        ingestion_enabled = st.checkbox(
+            "Record ingestion benchmark",
+            value=True,
+            key="ingestion_benchmark_toggle",
+        )
+
+        # Push the toggle to the API only when it actually changes - avoids
+        # spamming the config endpoint on every Streamlit rerun.
+        if st.session_state.get("last_ingestion_toggle") != ingestion_enabled:
+            try:
+                requests.post(
+                    f"{API_BASE_URL}/benchmark/config",
+                    json={"ingestion_enabled": ingestion_enabled},
+                    timeout=5,
+                )
+                st.session_state["last_ingestion_toggle"] = ingestion_enabled
+            except Exception as e:
+                st.warning(f"Could not update ingestion benchmark setting: {e}")
+
+        if st.button("Download Ingestion Benchmark"):
+            try:
+                resp = requests.get(f"{API_BASE_URL}/benchmark/ingestion", timeout=10)
+                if resp.status_code == 200:
+                    st.download_button(
+                        label="Save ingestion_benchmark.csv",
+                        data=resp.content,
+                        file_name="ingestion_benchmark.csv",
+                        mime="text/csv",
+                        key="download_ingestion_csv",
+                    )
+                else:
+                    st.warning("No ingestion benchmark data available yet.")
+            except Exception as e:
+                st.error(f"Failed to fetch ingestion benchmark: {e}")
+
+    with col2:
+        st.subheader("Retrieval")
+
+        record_data = st.checkbox(
+            "Record retrieval benchmark (TESTER MODE)",
+            value=False,
+            key="retrieval_benchmark_toggle",
+        )
+        st.caption(
+            "When enabled, your questions and retrieved context are saved "
+            "locally to benchmark_log.csv. Nothing leaves your machine."
+        )
+
+        if st.button("Download Retrieval Benchmark"):
+            try:
+                with open("logs/benchmark_log.csv", "rb") as f:
+                    st.download_button(
+                        label="Save retrieval_benchmark.csv",
+                        data=f.read(),
+                        file_name="retrieval_benchmark.csv",
+                        mime="text/csv",
+                        key="download_retrieval_csv",
+                    )
+            except FileNotFoundError:
+                st.warning("No retrieval benchmark data available yet.")
 
 st.divider()
 

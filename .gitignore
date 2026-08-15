@@ -20,3 +20,6 @@ logs/
 # OS-specific junk files
 .DS_Store
 Thumbs.db
+
+# Automated testing data
+benchmarking/test_data/

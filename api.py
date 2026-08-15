@@ -10,6 +10,8 @@ from ingestion import extractor
 from ingestion import storage
 from ingestion import pipeline
 
+from fastapi.responses import StreamingResponse, FileResponse
+
 app = FastAPI(title="Local RAG Application API")
 
 
@@ -25,7 +27,8 @@ class IngestRequest(BaseModel):
     text_content: str
     source_name: str
 
-
+class BenchmarkConfig(BaseModel):
+    ingestion_enabled: bool
 
 
 @app.post("/ingest")
@@ -132,6 +135,39 @@ async def ingest_pdf(file: UploadFile = File(...), source_name: str = None):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/benchmark/config")
+async def set_benchmark_config(payload: BenchmarkConfig):
+    """Toggles ingestion benchmark logging on/off globally. Every ingestion
+    call (UI, curl, bulk_ingest.py) respects this immediately - no need to
+    change any caller."""
+    pipeline.set_benchmark_enabled(payload.ingestion_enabled)
+    return {"status": "success", "ingestion_enabled": payload.ingestion_enabled}
+ 
+ 
+@app.get("/benchmark/config")
+async def get_benchmark_config():
+    """Returns the current ingestion benchmark on/off state."""
+    return {"ingestion_enabled": pipeline.is_benchmark_enabled()}
+ 
+ 
+@app.get("/benchmark/ingestion")
+async def download_ingestion_benchmark():
+    """Serves the current ingestion benchmark CSV, read fresh from disk on
+    every request - never a cached/stale copy."""
+    if not pipeline.LOG_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="No ingestion benchmark data recorded yet."
+        )
+    return FileResponse(
+        path=pipeline.LOG_PATH,
+        media_type="text/csv",
+        filename="ingestion_benchmark.csv",
+    )
+ 
 
 
     

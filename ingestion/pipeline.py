@@ -17,17 +17,13 @@ MAX_TEXT_LENGTH = 500_000
 
 LOG_PATH = Path(os.environ.get("BENCHMARK_LOG_PATH", "logs/benchmark_results.csv"))
 
-# Superset of columns across all stages. Not every stage populates every
-# column (e.g. only "chunk" rows have overlap stats) - csv.DictWriter fills
-# any column missing from a given row with "" automatically, so this is
-# safe to keep as one flat schema rather than per-stage files.
 LOG_FIELDS = [
     "timestamp", "run_id", "source", "stage",
     "duration_sec", "cpu_percent", "ram_mb", "algorithm_version",
-    # chunk-stage quality columns
+    "garbage_char_ratio", "newline_density", "avg_word_length",
     "avg_overlap_chars", "max_overlap_chars", "target_overlap_chars",
-    # embed-stage quality columns
     "embedding_dimension", "zero_vector_count", "nan_count", "dimension_mismatch_count",
+    "stored_count", "expected_count", "count_match", "roundtrip_match",
 ]
 
 _process = psutil.Process(os.getpid())
@@ -38,6 +34,23 @@ ALGORITHM_VERSIONS = {
     "embed": embedder.VERSION,
     "store": storage.VERSION,
 }
+
+# Global on/off switch for ingestion benchmark logging. Lives here, not
+# passed as a parameter by callers - every ingestion path (UI, curl,
+# bulk_ingest.py, anything written later) automatically respects this
+# single source of truth with zero changes needed on their end. Toggled
+# via set_benchmark_enabled(), typically called from api.py's
+# /benchmark/config endpoint.
+_benchmark_enabled = True
+
+
+def set_benchmark_enabled(enabled: bool):
+    global _benchmark_enabled
+    _benchmark_enabled = enabled
+
+
+def is_benchmark_enabled() -> bool:
+    return _benchmark_enabled
 
 
 class DocumentTooLargeError(Exception):
@@ -57,12 +70,6 @@ def _sample_resources():
 
 
 def _log_stage(run_id: str, source: str, stage: str, duration_sec: float, **extra) -> dict:
-    """
-    Appends one row per stage (long format, per Phase 0 schema). `extra`
-    carries stage-specific quality metrics (e.g. overlap stats for "chunk",
-    embedding sanity checks for "embed") - merged into the row, left blank
-    for stages that don't produce them.
-    """
     row = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
@@ -73,6 +80,10 @@ def _log_stage(run_id: str, source: str, stage: str, duration_sec: float, **extr
         **_sample_resources(),
         **extra,
     }
+
+    if not _benchmark_enabled:
+        return row
+
     try:
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         file_exists = LOG_PATH.exists()
@@ -87,10 +98,7 @@ def _log_stage(run_id: str, source: str, stage: str, duration_sec: float, **extr
 
 
 def ingest_document(text: str, source_name: str, run_id: str = None):
-    """
-    Core ingestion pipeline (blocking). Logs one CSV row per stage, with
-    quality metrics attached to the chunk and embed rows.
-    """
+    """Core ingestion pipeline (blocking)."""
     run_id = run_id or str(uuid.uuid4())
 
     t0 = time.perf_counter()
@@ -116,7 +124,15 @@ def ingest_document(text: str, source_name: str, run_id: str = None):
 
     t2 = time.perf_counter()
     collection_name = storage.index_document(source_name, chunks, embeddings)
-    _log_stage(run_id, source_name, "store", time.perf_counter() - t2)
+    store_duration = time.perf_counter() - t2
+    verification = storage.verify_storage(collection_name, chunks, embeddings)
+    _log_stage(
+        run_id, source_name, "store", store_duration,
+        stored_count=verification["stored_count"],
+        expected_count=verification["expected_count"],
+        count_match=verification["count_match"],
+        roundtrip_match=verification["roundtrip_match"],
+    )
 
     return {"collection_name": collection_name, "chunks": len(chunks), "run_id": run_id}
 
@@ -127,7 +143,13 @@ def ingest_pdf(file_bytes: bytes, source_name: str):
 
     t0 = time.perf_counter()
     text = extractor.extract_text_from_pdf(file_bytes)
-    _log_stage(run_id, source_name, "extract", time.perf_counter() - t0)
+    extract_quality = extractor.measure_extraction_quality(text)
+    _log_stage(
+        run_id, source_name, "extract", time.perf_counter() - t0,
+        garbage_char_ratio=extract_quality["garbage_char_ratio"],
+        newline_density=extract_quality["newline_density"],
+        avg_word_length=extract_quality["avg_word_length"],
+    )
 
     return ingest_document(text=text, source_name=source_name, run_id=run_id)
 
@@ -138,7 +160,13 @@ def ingest_pdf_live(file_bytes: bytes, source_name: str):
 
     t0 = time.perf_counter()
     text = extractor.extract_text_from_pdf(file_bytes)
-    row = _log_stage(run_id, source_name, "extract", time.perf_counter() - t0)
+    extract_quality = extractor.measure_extraction_quality(text)
+    row = _log_stage(
+        run_id, source_name, "extract", time.perf_counter() - t0,
+        garbage_char_ratio=extract_quality["garbage_char_ratio"],
+        newline_density=extract_quality["newline_density"],
+        avg_word_length=extract_quality["avg_word_length"],
+    )
     yield {**row, "progress": "1/4"}
 
     t1 = time.perf_counter()
@@ -166,7 +194,15 @@ def ingest_pdf_live(file_bytes: bytes, source_name: str):
 
     t3 = time.perf_counter()
     collection_name = storage.index_document(source_name, chunks, embeddings)
-    row = _log_stage(run_id, source_name, "store", time.perf_counter() - t3)
+    store_duration = time.perf_counter() - t3
+    verification = storage.verify_storage(collection_name, chunks, embeddings)
+    row = _log_stage(
+        run_id, source_name, "store", store_duration,
+        stored_count=verification["stored_count"],
+        expected_count=verification["expected_count"],
+        count_match=verification["count_match"],
+        roundtrip_match=verification["roundtrip_match"],
+    )
     yield {**row, "progress": "4/4"}
 
     yield {
