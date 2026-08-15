@@ -16,3 +16,11 @@ We are currently focusing on algorithmic improvements for text ingestion and ret
 1. **Semantic / Recursive Chunking (`chunker.py`)**: Replace naive character overlap with structure/sentence-aware splitting to preserve semantic meaning.
 2. **Asynchronous Embedding (`embedder.py`)**: Implement `asyncio` to send concurrent embedding requests to Ollama, reducing the CPU embedding bottleneck.
 3. **Two-Stage Retrieval (Re-ranking) (`api.py`)**: Fetch Top 15 chunks from ChromaDB, then algorithmically score/re-rank them down to the Top 5 before feeding to the LLM to improve answer precision.
+
+## Current Status & Next Session (August 2026)
+- **Baseline Locked:** The `v2` baseline has been safely pushed to `main`.
+- **Automated Testing:** We designed `benchmarking/autotest_suite.py` to automatically ingest from `benchmarking/test_data/` and query via `benchmarking/test_queries.json` using the local Ollama models (like `gemma3:4b`). The user is running this to build a statistically significant `v2` baseline dataset before we write any new code.
+- **Next Steps for next chat:**
+  1. Create the `experimental-v3-chunker` Git branch.
+  2. Rewrite `chunker.py` to use Recursive Semantic Chunking and set `VERSION = "recursive-semantic-v3"`.
+  3. Update `docs/` to reflect the new testing suite and `v3` architecture changes.
