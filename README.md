@@ -84,13 +84,23 @@ http://localhost:8501
 
 Upload a document from the sidebar, pick a model and document from the dropdowns, and ask a question.
 
-## Bulk ingestion (optional)
+## Automated Benchmarking & Bulk Ingestion
 
-To ingest many files at once from the command line instead of the UI:
+To systematically test the system or ingest many files at once from the command line:
+
+**Bulk Ingest Only:**
 ```bash
 python3 bulk_ingest.py ./path/to/your/folder
 ```
-(Run this outside Docker, against a locally-running instance of the API — requires the same Python packages listed in `requirements.txt`.)
+
+**End-to-End Automated Testing (Ingest + Retrieve + Log):**
+1. Place test PDFs/TXTs in `benchmarking/test_data/`
+2. Define your queries in `benchmarking/test_queries.json`
+3. Run the suite:
+```bash
+python3 benchmarking/autotest_suite.py
+```
+*(Run these outside Docker, against a locally-running instance of the API — requires the same Python packages listed in `requirements.txt`.)*
 
 ## Known limitations
 
@@ -104,8 +114,13 @@ This project has been extensively tested and benchmarked. Some honest, evidence-
 
 ## Roadmap / planned features
 
+**Currently in progress (Advanced RAG v3):**
+1. **Semantic/Recursive Chunking:** Moving away from raw character limits to preserve sentence boundaries.
+2. **Asynchronous Embedding:** Eliminating the CPU bottleneck by sending concurrent embedding requests.
+3. **Two-Stage Retrieval (Re-ranking):** Fetching top 15 chunks and algorithmically ranking them down to the top 5 for maximum accuracy.
+
+**Future:**
 - Conversation history and follow-up question support
 - Native desktop app option
-- Recursive/smarter text chunking
 - Web page ingestion (not just files)
 - Multi-provider model support (Claude, GPT, etc.)
