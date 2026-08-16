@@ -47,7 +47,7 @@ If Ollama fails to start after this change, check the logs:
 sudo journalctl -u ollama -n 30 --no-pager
 ```
 
-Common issues we ran into and their fixes:
+Common issues and their fixes:
 
 - **`permission denied` creating `/usr/share/ollama`** — the systemd-managed `ollama` user may not have access to its own data directory. Ensure ownership is correct: `sudo chown -R ollama:ollama /usr/share/ollama` (create the directory first with `sudo mkdir -p /usr/share/ollama` if it doesn't exist).
 - **Models don't show up (`ollama list` is empty) after this change** — if you originally pulled models while Ollama was running as your own user (not the systemd service), your models live under `~/.ollama/models`, but the service looks in `/usr/share/ollama/.ollama/models` by default. Point it at your existing models instead of re-downloading:
@@ -55,14 +55,14 @@ Common issues we ran into and their fixes:
   sudo tee /etc/systemd/system/ollama.service.d/override.conf > /dev/null <<'EOF'
   [Service]
   Environment="OLLAMA_HOST=0.0.0.0"
-  Environment="OLLAMA_MODELS=/home/YOUR_USERNAME/.ollama/models"
+  Environment="OLLAMA_MODELS=/home/your_username/.ollama/models"
   EOF
-  sudo chmod -R o+rX /home/YOUR_USERNAME/.ollama
-  chmod o+x /home/YOUR_USERNAME
+  sudo chmod -R o+rX /home/your_username/.ollama
+  chmod o+x /home/your_username
   sudo systemctl daemon-reload
   sudo systemctl restart ollama
   ```
-  (replace `YOUR_USERNAME` with your actual username)
+  (replace `your_username` with your actual username)
 - **`address already in use`** — an old Ollama process may still be running outside systemd's control. Find and stop it: `sudo lsof -i :11434`, then `sudo kill -9 <PID>`.
 
 Verify Ollama is working correctly before proceeding:
@@ -84,7 +84,7 @@ http://localhost:8501
 
 Upload a document from the sidebar, pick a model and document from the dropdowns, and ask a question.
 
-## Automated Benchmarking & Bulk Ingestion
+## Automated benchmarking & bulk ingestion
 
 To systematically test the system or ingest many files at once from the command line:
 
